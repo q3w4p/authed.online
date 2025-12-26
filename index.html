@@ -14,74 +14,218 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #000000;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated background particles */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveBackground 20s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes moveBackground {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
         }
 
         .container {
-            background: #ffffff;
-            border-radius: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
             padding: 60px;
             max-width: 450px;
             width: 100%;
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+                        0 0 0 1px rgba(255, 255, 255, 0.1);
             text-align: center;
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Glow effect on container */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #000000, #333333, #000000);
+            border-radius: 16px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .container:hover::before {
+            opacity: 0.3;
         }
 
         h1 {
             color: #000000;
-            font-size: 28px;
+            font-size: 32px;
             margin-bottom: 40px;
-            font-weight: 600;
-            letter-spacing: -0.5px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #000000 0%, #333333 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s backwards;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .discord-btn {
-            background: #000000;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
             color: #ffffff;
             border: none;
-            padding: 16px 36px;
-            border-radius: 0;
-            font-size: 15px;
-            font-weight: 500;
+            padding: 18px 40px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            transition: all 0.2s ease;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             text-decoration: none;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s backwards;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Button shine effect */
+        .discord-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .discord-btn:hover::before {
+            left: 100%;
         }
 
         .discord-btn:hover {
-            background: #1a1a1a;
-            transform: translateY(-1px);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
         }
 
         .discord-btn:active {
-            transform: translateY(0);
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .discord-icon {
+            width: 24px;
+            height: 24px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .subtitle {
+            color: #666666;
+            font-size: 14px;
+            margin-bottom: 30px;
+            opacity: 0;
+            animation: fadeIn 0.6s ease 0.6s forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
         }
 
         @media (max-width: 600px) {
             .container {
                 padding: 40px 30px;
+                border-radius: 12px;
             }
             h1 {
-                font-size: 24px;
+                font-size: 26px;
+                margin-bottom: 30px;
             }
+            .discord-btn {
+                padding: 16px 32px;
+                font-size: 15px;
+            }
+        }
+
+        /* Loading state for button */
+        .discord-btn.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .discord-btn.loading .discord-icon {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Verify in /suffocated</h1>
+        <p class="subtitle">Connect your Discord account to get verified</p>
         
         <a href="#" class="discord-btn" id="loginBtn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <svg class="discord-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
             </svg>
             Connect Discord
@@ -92,7 +236,7 @@
         // ⚠️ CONFIGURATION - UPDATE BACKEND_URL ⚠️
         const CONFIG = {
             CLIENT_ID: '1454032891435815145',
-            BACKEND_URL: 'https://fantastic-goggles-pj4q4jw599v5f6w57-3000.app.github.dev' // CHANGE THIS!
+            BACKEND_URL: 'https://cautious-space-guacamole-x57q75pgx4jp36rv7-3000.app.github.dev' // CHANGE THIS TO YOUR BACKEND URL!
         };
 
         const loginBtn = document.getElementById('loginBtn');
@@ -103,6 +247,9 @@
 
         loginBtn.addEventListener('click', (e) => {
             e.preventDefault();
+            
+            // Add loading state
+            loginBtn.classList.add('loading');
             
             const state = generateState();
             localStorage.setItem('oauth_state', state);
@@ -115,7 +262,10 @@
                 state: state
             });
 
-            window.location.href = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
+            // Small delay for visual feedback
+            setTimeout(() => {
+                window.location.href = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
+            }, 300);
         });
     </script>
 </body>
