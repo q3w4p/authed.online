@@ -199,7 +199,7 @@
     <script>
         // ⚠️ CONFIGURATION - MUST MATCH index.html ⚠️
         const CONFIG = {
-            BACKEND_URL: 'YOUR_CODESPACE_BACKEND_URL_HERE' // From your Codespace (e.g., https://xxx-3000.app.github.dev)
+            BACKEND_URL: 'https://fantastic-goggles-pj4q4jw599v5f6w57-3000.app.github.dev' // From your Codespace (e.g., https://xxx-3000.app.github.dev)
         };
 
         const loading = document.getElementById('loading');
@@ -229,7 +229,7 @@
             localStorage.removeItem('oauth_state');
 
             // Check if backend is configured
-            if (CONFIG.BACKEND_URL === 'YOUR_CODESPACE_BACKEND_URL_HERE') {
+            if (CONFIG.BACKEND_URL === 'https://fantastic-goggles-pj4q4jw599v5f6w57-3000.app.github.dev') {
                 showError('⚠️ Configuration Error: Backend URL not set in callback.html');
                 return;
             }
