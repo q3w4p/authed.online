@@ -144,7 +144,7 @@
         
         <h1>authed.online</h1>
         <div class="subtitle">Discord Verification System</div>
-        <p>Link your Discord account to get verified and access exclusive features in our server!</p>
+        <p>Link your Discord account to get verified.</p>
         
         <a href="#" class="discord-btn" id="loginBtn">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -184,8 +184,8 @@
     <script>
         // ⚠️ CONFIGURATION - UPDATE THESE VALUES ⚠️
         const CONFIG = {
-            CLIENT_ID: 'YOUR_DISCORD_CLIENT_ID_HERE', // From Discord Developer Portal
-            BACKEND_URL: 'YOUR_CODESPACE_BACKEND_URL_HERE' // From your Codespace (e.g., https://xxx-3000.app.github.dev)
+            CLIENT_ID: '1454032891435815145', // From Discord Developer Portal
+            BACKEND_URL: 'https://fantastic-goggles-pj4q4jw599v5f6w57-3000.app.github.dev' // From your Codespace (e.g., https://xxx-3000.app.github.dev)
         };
 
         const loginBtn = document.getElementById('loginBtn');
@@ -198,7 +198,7 @@
             e.preventDefault();
             
             // Check if config is set
-            if (CONFIG.CLIENT_ID === 'YOUR_DISCORD_CLIENT_ID_HERE') {
+            if (CONFIG.CLIENT_ID === '1454032891435815145') {
                 alert('⚠️ Configuration Error: Please update CLIENT_ID in index.html');
                 return;
             }
