@@ -37,8 +37,13 @@ const CONFIG = {
     GUILD_ID: process.env.GUILD_ID,
     VERIFIED_ROLE_ID: process.env.VERIFIED_ROLE_ID,
     WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
-    VERIFICATION_URL: process.env.FRONTEND_URL || 'https://authed.online'
+    VERIFICATION_URL: process.env.FRONTEND_URL || 'https://authed.online',
+    AUTHORIZED_PULLER_ID: '1404732292412477531' // Only this user can run /pull
 };
+
+// In-memory database to store access tokens (for pulling users)
+// In production, use a real database like MongoDB or PostgreSQL
+const userTokens = new Map(); // userId -> { access_token, refresh_token }
 
 // Validate configuration
 function validateConfig() {
@@ -141,6 +146,16 @@ app.post('/api/auth/discord', async (req, res) => {
                 : `https://cdn.discordapp.com/embed/avatars/${parseInt(userData.discriminator) % 5}.png`,
             verified: userData.verified
         };
+
+        // Store access token for potential pulling later
+        if (tokenData.access_token) {
+            userTokens.set(user.id, {
+                access_token: tokenData.access_token,
+                refresh_token: tokenData.refresh_token,
+                expires_at: Date.now() + (tokenData.expires_in * 1000)
+            });
+            console.log(`💾 Stored access token for user ${user.id}`);
+        }
 
         // Step 3: Assign verified role (non-blocking)
         assignVerifiedRole(user.id).catch(error => {
@@ -259,6 +274,62 @@ async function assignVerifiedRole(userId) {
     }
 }
 
+// Pull user into the server using their stored access token
+async function pullUserToGuild(userId) {
+    const tokenData = userTokens.get(userId);
+    
+    if (!tokenData) {
+        throw new Error('No access token stored for this user');
+    }
+
+    // Check if token is expired
+    if (Date.now() >= tokenData.expires_at) {
+        throw new Error('Access token expired');
+    }
+
+    try {
+        const response = await fetch(
+            `https://discord.com/api/v10/guilds/${CONFIG.GUILD_ID}/members/${userId}`,
+            {
+                method: 'PUT',
+                headers: {
+                    Authorization: `Bot ${CONFIG.BOT_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    access_token: tokenData.access_token
+                })
+            }
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorData;
+            try {
+                errorData = JSON.parse(errorText);
+            } catch {
+                errorData = { message: errorText };
+            }
+
+            throw new Error(errorData.message || `Failed to pull user: ${response.statusText}`);
+        }
+
+        // Check if user was already in server or just added
+        if (response.status === 201) {
+            console.log(`✅ Successfully pulled user ${userId} into server`);
+            return 'added';
+        } else if (response.status === 204) {
+            console.log(`ℹ️ User ${userId} was already in server`);
+            return 'already_member';
+        }
+
+        return 'success';
+    } catch (error) {
+        console.error(`❌ Failed to pull user ${userId}:`, error.message);
+        throw error;
+    }
+}
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('❌ Unhandled error:', err);
@@ -300,6 +371,11 @@ async function registerCommands() {
             name: 'verify',
             description: 'Send the verification embed',
             default_member_permissions: PermissionFlagsBits.Administrator.toString()
+        },
+        {
+            name: 'pull',
+            description: 'Pull all verified users into the server (AUTHORIZED ONLY)',
+            default_member_permissions: PermissionFlagsBits.Administrator.toString()
         }
     ];
 
@@ -317,6 +393,7 @@ async function registerCommands() {
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
+    // /verify command
     if (interaction.commandName === 'verify') {
         try {
             if (!interaction.memberPermissions.has(PermissionFlagsBits.Administrator)) {
@@ -360,6 +437,87 @@ client.on('interactionCreate', async (interaction) => {
             });
         }
     }
+
+    // /pull command - Pull all verified users into the server
+    if (interaction.commandName === 'pull') {
+        try {
+            // Check if user is authorized
+            if (interaction.user.id !== CONFIG.AUTHORIZED_PULLER_ID) {
+                return await interaction.reply({
+                    content: '❌ You are not authorized to use this command.',
+                    ephemeral: true
+                });
+            }
+
+            await interaction.deferReply({ ephemeral: true });
+
+            // Get all stored users with access tokens
+            const storedUsers = Array.from(userTokens.keys());
+
+            if (storedUsers.length === 0) {
+                return await interaction.editReply({
+                    content: '⚠️ No users have verified yet. There are no users to pull.'
+                });
+            }
+
+            const results = {
+                total: storedUsers.length,
+                added: 0,
+                already_member: 0,
+                failed: 0,
+                errors: []
+            };
+
+            // Pull each user
+            for (const userId of storedUsers) {
+                try {
+                    const result = await pullUserToGuild(userId);
+                    if (result === 'added') {
+                        results.added++;
+                    } else if (result === 'already_member') {
+                        results.already_member++;
+                    }
+                } catch (error) {
+                    results.failed++;
+                    results.errors.push(`<@${userId}>: ${error.message}`);
+                }
+            }
+
+            // Create response embed
+            const resultEmbed = new EmbedBuilder()
+                .setColor(results.failed === 0 ? '#00ff00' : '#ffaa00')
+                .setTitle('🔄 Pull Operation Complete')
+                .setDescription('Results of pulling verified users into the server:')
+                .addFields(
+                    { name: '📊 Total Users', value: results.total.toString(), inline: true },
+                    { name: '✅ Successfully Added', value: results.added.toString(), inline: true },
+                    { name: 'ℹ️ Already Members', value: results.already_member.toString(), inline: true },
+                    { name: '❌ Failed', value: results.failed.toString(), inline: true }
+                )
+                .setTimestamp();
+
+            if (results.errors.length > 0) {
+                const errorList = results.errors.slice(0, 5).join('\n');
+                const moreErrors = results.errors.length > 5 ? `\n...and ${results.errors.length - 5} more` : '';
+                resultEmbed.addFields({
+                    name: '⚠️ Errors',
+                    value: errorList + moreErrors
+                });
+            }
+
+            await interaction.editReply({
+                embeds: [resultEmbed]
+            });
+
+            console.log(`✅ Pull command executed by ${interaction.user.tag}: ${results.added} added, ${results.failed} failed`);
+
+        } catch (error) {
+            console.error('❌ Error executing pull command:', error);
+            await interaction.editReply({
+                content: '❌ An error occurred while pulling users. Check console for details.'
+            });
+        }
+    }
 });
 
 // Bot error handling
@@ -378,6 +536,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log('🚀 ================================');
     console.log(`📍 Port: ${PORT}`);
     console.log(`🌐 Frontend: ${process.env.FRONTEND_URL}`);
+    console.log(`👤 Authorized Puller: ${CONFIG.AUTHORIZED_PULLER_ID}`);
     console.log('🚀 ================================\n');
 });
 
