@@ -82,7 +82,7 @@ client.on('interactionCreate', async (interaction) => {
 
             // Create button with link
             const button = new ButtonBuilder()
-                .setLabel('Verify Account')
+                .setLabel('')
                 .setStyle(ButtonStyle.Link)
                 .setURL(CONFIG.VERIFICATION_URL)
                 .setEmoji('🔗'); // Link emoji

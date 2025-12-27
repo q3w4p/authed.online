@@ -338,7 +338,7 @@ client.on('interactionCreate', async (interaction) => {
                 .setTimestamp();
 
             const button = new ButtonBuilder()
-                .setLabel('Verify Account')
+                .setLabel('')
                 .setStyle(ButtonStyle.Link)
                 .setURL(CONFIG.VERIFICATION_URL)
                 .setEmoji('🔗');
