@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authorized - authed.online</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✓</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        :root {
+            --bg-darker: #050505;
+            --bg-card: #111111;
+            --text-primary: #ffffff;
+            --text-secondary: #6b7280;
+            --border: rgba(255, 255, 255, 0.06);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes rotate {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+
+        @keyframes gradient {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-80px, 80px); }
+        }
+
+        @keyframes checkmark {
+            0% {
+                stroke-dashoffset: 100;
+            }
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes scaleIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        body.loaded {
+            opacity: 1;
+        }
+
+        .bg-grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            z-index: 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' /%3E%3C/svg%3E");
+        }
+
+        .bg-gradient {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .gradient-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(150px);
+            opacity: 0.08;
+        }
+
+        .blob-1 {
+            width: 700px;
+            height: 700px;
+            background: #ffffff;
+            top: -200px;
+            right: -100px;
+            animation: gradient 30s infinite ease-in-out;
+        }
+
+        .blob-2 {
+            width: 600px;
+            height: 600px;
+            background: #9ca3af;
+            bottom: -200px;
+            left: -200px;
+            animation: gradient 25s infinite ease-in-out reverse;
+        }
+
+        .section {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .animated-border-box {
+            position: relative;
+            overflow: hidden;
+            z-index: 0;
+            border-radius: 20px;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .animated-border-box.visible {
+            animation: fadeInUp 1s ease forwards;
+        }
+
+        .animated-border-box:before {
+            content: '';
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(0deg);
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background-repeat: no-repeat;
+            background-position: 0 0;
+            background-image: conic-gradient(transparent, #22c55e, transparent 2%);
+            animation: rotate 20s linear infinite;
+            z-index: -2;
+        }
+
+        .animated-border-box:after {
+            content: '';
+            position: absolute;
+            z-index: -1;
+            left: 1px;
+            top: 1px;
+            width: calc(100% - 2px);
+            height: calc(100% - 2px);
+            background: var(--bg-darker);
+            border-radius: 19px;
+        }
+
+        .container {
+            background: transparent;
+            border-radius: 20px;
+            padding: 50px 40px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .checkmark-svg {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            animation: scaleIn 0.6s ease;
+        }
+
+        .checkmark-circle {
+            stroke: #22c55e;
+            stroke-width: 3;
+            fill: none;
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            animation: checkmark 0.6s ease 0.3s forwards;
+        }
+
+        .checkmark-check {
+            stroke: #22c55e;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: checkmark 0.3s ease 0.8s forwards;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .user-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .user-details {
+            flex: 1;
+            text-align: left;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .user-email {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .btn-primary {
+            background: var(--text-primary);
+            color: var(--bg-darker);
+            padding: 14px 40px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(255, 255, 255, 0.15);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 40px 30px;
+            }
+
+            .user-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .user-details {
+                text-align: center;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grain"></div>
+    <div class="bg-gradient">
+        <div class="gradient-blob blob-1"></div>
+        <div class="gradient-blob blob-2"></div>
+    </div>
+
+    <div class="section">
+        <div class="animated-border-box" id="card">
+            <div class="container">
+                <svg class="checkmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark-circle" cx="26" cy="26" r="25"/>
+                    <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+
+                <h1>Authorized</h1>
+                <p class="subtitle">Your Discord account has been successfully verified</p>
+
+                <div class="user-card" id="userCard">
+                    <!-- User info will be inserted here -->
+                </div>
+
+                <a href="index.html" class="btn-primary">Done</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', () => {
+            document.body.classList.add('loaded');
+            setTimeout(() => {
+                document.getElementById('card').classList.add('visible');
+            }, 100);
+        });
+
+        document.getElementById('card').classList.add('visible');
+
+        // Get user data from URL parameters or localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('username') || 'Discord User';
+        const avatar = urlParams.get('avatar') || 'https://cdn.discordapp.com/embed/avatars/0.png';
+        const email = urlParams.get('email') || '';
+
+        // Display user info
+        const userCard = document.getElementById('userCard');
+        userCard.innerHTML = `
+            <img src="${avatar}" alt="${username}" class="user-avatar">
+            <div class="user-details">
+                <div class="user-name">${username}</div>
+                ${email ? `<div class="user-email">${email}</div>` : ''}
+            </div>
+        `;
+    </script>
+</body>
+</html>
