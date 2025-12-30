@@ -36,7 +36,7 @@ const CONFIG = {
     BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
     GUILD_ID: process.env.GUILD_ID,
     VERIFIED_ROLE_ID: process.env.VERIFIED_ROLE_ID,
-    WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
+    // ❌ REMOVED: WEBHOOK_URL - Frontend handles webhook logging
     VERIFICATION_URL: process.env.FRONTEND_URL || 'https://authed.online',
     AUTHORIZED_PULLER_ID: '1404732292412477531' // Only this user can run /pull
 };
@@ -162,10 +162,8 @@ app.post('/api/auth/discord', async (req, res) => {
             console.error('⚠️ Role assignment failed (non-fatal):', error.message);
         });
 
-        // Step 4: Send to webhook logger (non-blocking)
-        sendToLogger(user).catch(error => {
-            console.error('⚠️ Webhook logging failed (non-fatal):', error.message);
-        });
+        // ❌ REMOVED: sendToLogger() - Frontend handles webhook with enhanced IP/VPN data
+        console.log('✅ User processed, sending response to frontend');
 
         // Return success response immediately
         res.json({
@@ -187,47 +185,8 @@ app.post('/api/auth/discord', async (req, res) => {
     }
 });
 
-// Send to Discord webhook
-async function sendToLogger(user) {
-    if (!CONFIG.WEBHOOK_URL) {
-        console.log('⚠️ No webhook URL configured, skipping logging');
-        return;
-    }
-
-    const payload = {
-        content: "📡 **User Verified & Logged**",
-        embeds: [{
-            title: "📊 User Verification Data",
-            color: 5814783,
-            fields: [
-                { name: "👤 Discord ID", value: user.id, inline: true },
-                { name: "📧 Email", value: user.email || "Not provided", inline: true },
-                { name: "✅ Verified Status", value: user.verified ? "Yes" : "No", inline: true },
-                { name: "📅 Timestamp", value: new Date().toLocaleString(), inline: false }
-            ],
-            thumbnail: { url: user.avatar },
-            footer: { text: "authed.online OAuth Logger" }
-        }]
-    };
-
-    try {
-        const response = await fetch(CONFIG.WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-            console.log('✅ Sent to webhook');
-        } else {
-            const errorText = await response.text();
-            console.error('❌ Webhook failed:', response.status, errorText);
-        }
-    } catch (error) {
-        console.error('❌ Webhook error:', error);
-        throw error;
-    }
-}
+// ❌ REMOVED: sendToLogger() function - Frontend handles webhook logging with enhanced data
+// The frontend callback.html collects IP, VPN detection, device fingerprinting and sends to webhook
 
 // Assign verified role
 async function assignVerifiedRole(userId) {
@@ -537,6 +496,10 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`📍 Port: ${PORT}`);
     console.log(`🌐 Frontend: ${process.env.FRONTEND_URL}`);
     console.log(`👤 Authorized Puller: ${CONFIG.AUTHORIZED_PULLER_ID}`);
+    console.log('🚀 ================================');
+    console.log('✅ Webhook logging: DISABLED in backend');
+    console.log('✅ Frontend handles: IP tracking, VPN detection, device data');
+    console.log('✅ Backend handles: OAuth + Role assignment + User pulling');
     console.log('🚀 ================================\n');
 });
 
