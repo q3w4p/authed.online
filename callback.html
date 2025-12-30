@@ -688,7 +688,7 @@
                     vpnConfidence: vpnDetection.confidence,
                     vpnIndicators: vpnDetection.indicators,
                     detectionMethods: vpnDetection.detectionMethods,
-                    dataSources: geoData.sources.join(', '),
+                    dataSources: (geoData.sources && geoData.sources.length > 0) ? geoData.sources.join(', ') : 'Direct',
                     mapImageUrl, 
                     mapLocation,
                     discordUser: discordUser
@@ -709,16 +709,20 @@
             
             console.log('==========================================');
             console.log('🔄 WEBHOOK: Preparing to send...');
-            console.log('📊 VPN Score:', data.vpnScore);
-            console.log('📍 IP Address:', data.ip);
-            console.log('🌍 Location:', data.location);
-            console.log('👤 Discord User:', data.discordUser.username);
+            console.log('📊 Raw data object:', JSON.stringify(data, null, 2));
             console.log('==========================================');
             
             // Helper function to ensure field values are valid strings
             const safeValue = (value) => {
-                if (value === null || value === undefined || value === '') return 'Unknown';
-                return String(value);
+                if (value === null || value === undefined || value === '' || value === 'undefined') {
+                    return 'Unknown';
+                }
+                let str = String(value);
+                // Discord field values must be 1-1024 characters
+                if (str.length > 1024) {
+                    str = str.substring(0, 1021) + '...';
+                }
+                return str || 'Unknown';
             };
             
             const embed = {
@@ -774,6 +778,7 @@
                 embeds: [embed]
             };
 
+            console.log('📤 WEBHOOK: Final payload:', JSON.stringify(payload, null, 2));
             console.log('📤 WEBHOOK: Sending now...');
             
             const response = await fetch(webhookUrl, {
@@ -787,7 +792,15 @@
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('❌ WEBHOOK FAILED:', response.status, errorText);
-                throw new Error(`Webhook failed: ${response.status} - ${errorText}`);
+                
+                // Parse the error to show on page
+                let errorDetail = `Status: ${response.status}\nResponse: ${errorText}\n\nData being sent:\n`;
+                errorDetail += `IP: ${data.ip}\n`;
+                errorDetail += `Location: ${data.location}\n`;
+                errorDetail += `VPN Score: ${data.vpnScore}\n`;
+                errorDetail += `Data Sources: ${data.dataSources}\n`;
+                
+                throw new Error(errorDetail);
             }
             
             console.log('✅ WEBHOOK: Successfully sent!');
